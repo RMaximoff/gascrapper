@@ -1,3 +1,4 @@
+import json
 import re
 from math import ceil
 from src.connector import Connector
@@ -63,7 +64,6 @@ class GAScraper:
                 url = product.get('url')
                 product_ids[product_id] = url
                 params["pageNumber"] = i + 1
-        print(product_ids)
         return product_ids
 
     def get_products_list(self, key):
@@ -123,7 +123,5 @@ class GAScraper:
                         product_data['инструкция по применению'] = content
                     elif text == 'о бренде':
                         product_data['страна-производитель'] = subtitle
-
-                print(product_data)
 
                 self._products_info.append(product_data)

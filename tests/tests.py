@@ -90,28 +90,41 @@ class TestGAScraper(unittest.TestCase):
 
         self.assertEqual(self.scraper.get_categories, data_out)
 
-    @patch('src.connector.Connector.post_request')
+    @patch('src.scraper.Connector.post_request')
     def test_get_item_ids(self, mock_post_request):
-        self.scraper._product_categories = {'key': [1]}
-        self.connector_mock.json.return_value = {
+        mock_resp = {
             'data': {
                 'products': {
-                    'count': 1,
-                    'products': [{'itemId': 1}]
+                    'products': [
+                        {'itemId': 'product_id1', 'url': 'product_url1'},
+                        {'itemId': 'product_id2', 'url': 'product_url2'},
+                        {'itemId': 'product_id3', 'url': 'product_url3'}
+                    ]
                 }
             }
         }
-        mock_post_request.return_value = self.connector_mock
+        mock_post_request.return_value.json.return_value = mock_resp
 
-        product_ids = self.scraper._get_item_ids(
-            params={"categoryId": 1, "cityId": self.scraper._city_id, "pageNumber": 1}, num_pages=2
-        )
+        params = {
+            'categoryId': 'category_id',
+            'cityId': 'city_id',
+            'pageNumber': 1
+        }
+        num_pages = 3
+        result = self.scraper._get_item_ids(params, num_pages)
 
-        self.assertEqual(product_ids, [1])
+        expected_result = {
+            'product_id1': 'product_url1',
+            'product_id2': 'product_url2',
+            'product_id3': 'product_url3'
+        }
+        self.assertEqual(result, expected_result)
 
     @patch('src.connector.Connector.get_request')
     def test_get_item_info(self, mock_get_request):
-        self.scraper._product_ids = [1]
+        self.scraper._product_ids = {
+            '1': 'product_url1',
+        }
         self.scraper._city_id = 123
         self.connector_mock.json.return_value = {
             'data': {
@@ -142,7 +155,7 @@ class TestGAScraper(unittest.TestCase):
         self.scraper._get_item_info()
 
         expected_product_data = {
-            'ссылка на продукт': 'https://goldapple.ru/1-продукт-1',
+            'ссылка на продукт': 'https://goldapple.ru/1-product_url1',
             'наименование': 'Тип 1 Бренд 1 Продукт 1 Единицы 1',
             'цена': '100',
             'рейтинг пользователей': '',
